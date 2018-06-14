@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import time
 import file_scraper
 from emissions import get_emissions
 import numpy as np
@@ -120,6 +121,8 @@ def mapme(fid, scale_dict, cutoff, include_list):
     #mean_sub_array = shp_array - shp_array.mean(axis=2, keepdims=True) 
     #print 'mean_sub    ', mean_sub_array.shape
     #result_array = mean_sub_array 
+    
+    
 
     print 'result      ', result_array.shape
     print 'slicing out channels'
@@ -132,14 +135,21 @@ def mapme(fid, scale_dict, cutoff, include_list):
 	emission_line = get_emissions(per_tab_dict, elem)
         llm, hlm = emission_line[1], emission_line[2]
 	Z = elem.split('_')[0] 
-        print elem, '\t', emission_line
+        print 'Element:', elem, '\t', 'Emission used for mapping:', emission_line, 'llm', llm, 'hlm', hlm
         slc_array = slice_and_sum_array(result_array, [llm, hlm])
+        # hardcode backgound removal for paper
+        tot_background = 10
+        background = tot_background / slc_array.size
+        slc_array = slc_array - background
+        #print 'Sum of all counts in image', (slc_array - background).sum()
+        ####################
         slc_array_list.append(slc_array)
+        print 'Sum of all counts in image', slc_array.sum()
 
-    fig, axs2 = plt.subplots(xbox, ybox, figsize=((15/aspect), 15), facecolor='0.3', edgecolor='k')
-    #fig, axs2 = plt.subplots(xbox, ybox, facecolor='0.3', edgecolor='k')
-    #fig, axs2 = plt.subplots(xbox, ybox, facecolor='0.3', edgecolor='k')
-    axs2 = axs2.ravel()
+    #fig, axs1 = plt.subplots(xbox, ybox, facecolor='0.3', edgecolor='k')
+    fig, axs1 = plt.subplots(xbox, ybox, figsize=(10,8), facecolor='0.3', edgecolor='k')
+    #fig, axs2 = plt.subplots(xbox, ybox, figsize=((15/aspect), 15), facecolor='0.3', edgecolor='k')
+    axs1 = axs1.ravel()
     print 'Plotting'
     for i, elem in enumerate(elem_list):
 	Z = elem.split('_')[0] 
@@ -147,18 +157,31 @@ def mapme(fid, scale_dict, cutoff, include_list):
         pymol_c =  per_tab_dict[Z][3]
         w2k = [(0, 0, 0), pymol_c]
         ct = LinearSegmentedColormap.from_list('ctest', w2k, N=300)
-	#axs2[i].imshow(ray, cmap=ct, interpolation='nearest')
-	axs2[i].imshow(ray, aspect='equal', extent=extents(spacex)+extents(spacey), origin='upper', cmap=ct, interpolation='nearest', vmin=0)
-	axs2[i].set_title(elem, y=0.9, color='0.8', loc='left')
-	#axs2[i].set_xticks([])
-	#axs2[i].set_yticks([])
+	img1 = axs1[i].imshow(ray, cmap=ct, interpolation='nearest')
+        cb = fig.colorbar(img1, ax=axs1[i], ticks=[0, int(ray.max())], pad=0.046, fraction=0.046) 
+	#axs2[i].imshow(ray, aspect='equal', extent=extents(spacex)+extents(spacey), origin='upper', cmap=ct, interpolation='nearest', vmin=0)
+	#axs2[i].set_title(elem, y=0.9, color='0.8', loc='left')
+	axs1[i].set_xticks([])
+	axs1[i].set_yticks([])
+       
+        if elem == 'Au':
+            sx = np.linspace(x_start, x_start+(xdim*(x_step_size/1000.)), xdim)
+            sy = np.linspace(y_start, y_start+(ydim*(y_step_size/1000.)), ydim)
+	    ray = slc_array_list[i]
+            ray = ray.ravel()
+            cc = 0
+            for x in sx:
+                for y in sy:
+                   print x, y, ray[cc]
+                   cc += 1
+                
+        
 
-    fig.subplots_adjust(left=0.05,bottom=0.05,right=0.95,top=0.95,wspace=0.00,hspace=0.0)
+    fig.subplots_adjust(left=0.05,bottom=0.05,right=0.95,top=0.95,wspace=0.30,hspace=0.0)
 
-    #xfid = fid.split('/')[-1]
-    #'/dls/i24/data/2017/nr16818-47/processing/GoldDigger_170512'
-    #output_fid = xfid[:-5] + '%s.png' %time.strftime("_%Y%m%d_%H%M%S")
-    #print 'Saved in /Snapshots'
-    #print output_fid
-    #plt.savefig(output_fid, dpi=400, bbox_inches='tight', pad_inches=0)
+    print fid
+    xfid = fid.split('/')[-1]
+    output_fid = xfid[:-5] + '%s.png' %time.strftime("_%Y%m%d_%H%M%S")
+    print output_fid
+    plt.savefig(output_fid, dpi=600, bbox_inches='tight', pad_inches=0)
     return fig

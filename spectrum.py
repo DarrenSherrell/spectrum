@@ -28,9 +28,9 @@ def argparser():
                         help='list of elements to include i.e. Fe K Ni')
     parser.add_argument('-e', '--exclude_list',  type=str, nargs='+', default = [],
                         help='list of elements to exclude i.e. Os W Ti or all')
-    parser.add_argument('-o', '--offset',  type=float, default = -20.0,
-                        help='fluoresence peak offset, defualt=-20.0')
-    parser.add_argument('-s', '--spread',  type=float, default = 110.0,
+    parser.add_argument('-o', '--offset',  type=float, default = 0.0,
+                        help='fluoresence peak offset, defualt= 0.0')
+    parser.add_argument('-s', '--spread',  type=float, default = 90.0,
                         help='spread/width of fluoresence peaks, defualt=110')
     parser.add_argument('-c', '--scale_cutoff',  type=float, default = 2.5,
                         help='minimum scale cutoff to remove incorrect peaks, defualt=2.5')
@@ -64,10 +64,12 @@ def get_sum_spectrum(fid, plot_indv):
     print 'Number of spectra', num_of_spectra
     print 'Number of bins   ', num_of_bins
 
-    spectrum_sum_scaled = (1.0 / num_of_spectra) * indv_spectra_array.sum(axis=0)
+    #spectrum_sum_scaled = (1.0 / num_of_spectra) * indv_spectra_array.sum(axis=0)
+    spectrum_sum_scaled = indv_spectra_array.sum(axis=0)
     #Slight fudge, scale needs better way of arriving at answer
-    scale_vortex_nrg = 8041.0 / 801.0
-    print 'Scale of Vortex to Energy', scale_vortex_nrg
+    #scale_vortex_nrg = 8041.0 / 801.0
+    scale_vortex_nrg = 10.02
+    print 'Scale of Vortex to Energy [HARDCODED]', scale_vortex_nrg
     terminal_energy = scale_vortex_nrg * (num_of_bins-1)
     print 'Terminal energy', terminal_energy
     
@@ -77,8 +79,11 @@ def get_sum_spectrum(fid, plot_indv):
     spectrum_sum_scal_mapped = interp1d(x_axis, spectrum_sum_scaled, 'linear')(one_ev_energy_axis) 
 
     #shift vertically
-    
-    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped - 8.0 
+    #background = 275.0 
+    #background = 250.0 
+    #background = 20.0 
+    background = 10.0 
+    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped - background
     return one_ev_energy_axis, spectrum_sum_scal_mapped
 
 def get_scale(curve, data):
@@ -91,7 +96,7 @@ def get_scale(curve, data):
     #if np.abs(c_idx - d_idx) > 7000:
     #   print 'WARNING THIS HAPPENED'
     #   return 0.0
-    for pos_scale in np.linspace(0,9999,10001):
+    for pos_scale in np.linspace(0,999999,100001):
         result = np.abs(data - (pos_scale*curve))
 	sumit =  np.sum(result)
         if sumit < 0.0:
@@ -108,7 +113,7 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0.0, hspace=0.0)
-    ax.plot(vortex_nrg_axis, sum_spec, c='w', lw=1)
+    ax.plot(vortex_nrg_axis, sum_spec, c='0.5', lw=1)
     scale_dict = {}
     
     if 'all' in exclude_list:
@@ -165,6 +170,11 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
                 x = emis_nrg_axis[np.argmax(base)]
                 y = max(scale_result*base)
                 ax.annotate(elem, xy=(x,y), xycoords='data', xytext=(2,2), textcoords='offset points', color=elem_color, fontsize=15)
+                ax.set_xlim(6000, 13600)
+
+    #bk_nrg_axis = vortex_nrg_axis
+    #bk_exp = ft.exp_func(bk_nrg_axis, 100000, 2, 1)
+    #ax.plot(bk_nrg_axis, bk_exp, c='r', lw=1)
     return scale_dict
 
 def run(fid, minimum_nrg, incident_nrg, cutoff, mapme, spread, offset, include_list, exclude_list, plot_indv):

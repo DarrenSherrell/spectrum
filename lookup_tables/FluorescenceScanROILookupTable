@@ -8,14 +8,17 @@
 # e.g. The L2 edge for Astatine is identified by the name At_L2
 #
 # After the name of the  edge is the low and high value for the region of interest for the detector. The number can be commana, space or tab separated.
+Fe_K,  6293, 6506
+Cu_K,  7935, 8148
+Au_L3, 9597, 9815
 #V_K 4000 5000
 #Se_K, 4000, 6000
 #Se_K, 10700, 11700
 Se_K, 10870, 11472
 #At_L2	6000,7000
 #Mn_K,  5000, 7200
-Fe_K,  6100, 6700
-Cu_K, 7830, 8230
+#Fe_K,  6100, 6700
+#Cu_K, 7830, 8230
 Rb_K, 13100, 15000
 Zn_K, 8550, 8750
 Co_K, 6600, 7900
@@ -26,7 +29,7 @@ Ta_L3, 8000, 8200
 #Pt_L3, 9250, 9500
 #Pt_L2, 11000,11300
 #Pt_L1, 12800,13100
-Au_L3, 9550,9800
+#Au_L3, 9550,9800
 Au_L2, 11350,11600
 Au_L1, 13250,13400
 Hg_L3, 9800,10050
